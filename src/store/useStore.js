@@ -40,6 +40,7 @@ const useStore = create((set, get) => ({
 }));
 
 const isFiltered = (state) => {
+    const activeCategory = state.activeCategory;
     const searchQuery = state.searchQuery;
     const ratingFilter = state.ratingFilter;
     const dateFrom = state.dateFrom;
@@ -50,7 +51,8 @@ const isFiltered = (state) => {
     ratingFilter > 0 ||
     dateFrom !== "" ||
     dateTo !== "" ||
-    sort.type !== null;
+    sort.type !== null || 
+    activeCategory !== "전체";
 }
 
 export default useStore;
