@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import useStore from "../../store/useStore";
 import useBookmarksStore from "../../store/useBookmarksStore";
+import { set } from "date-fns";
 
 /**
  * 카테고리 관리 모달
@@ -11,13 +12,15 @@ export default function ModalCategory({
 	onChangeCategories,
 	isEditing,
 	onEditing,
-	onChangeCategory,
+	onChangeDeleteTarget,
 	onDeleteCategory,
 }) {
 	const categories = useBookmarksStore((state) => state.categories);
 	const activeCategory = useStore((state) => state.activeCategory);
 	const setActiveCategory = useStore((state) => state.actions.setActiveCategory);
 	const updateCategories = useBookmarksStore((state) => state.actions.updateCategories);
+
+	const [editTarget, setEditTarget] = useState(null);
 	const [newCategory, setNewCategory] = useState("");
 	const [error, setError] = useState("");
 	const inputRef = useRef(null);
@@ -26,7 +29,8 @@ export default function ModalCategory({
 		requestAnimationFrame(() => inputRef.current?.focus());
 
 		return () => {
-			onChangeCategory();
+			onChangeDeleteTarget();
+			onEditing(false);
 		}
 	}, []);
 
@@ -46,6 +50,29 @@ export default function ModalCategory({
 		onEditing(true);
 		inputRef.current?.focus();
 	};
+
+	const handleRename = (e) => {
+		e.preventDefault();
+		const name = newCategory.trim();
+		if (!name) {
+			setError("카테고리 이름을 입력해주세요.");
+			return;
+		}
+		if (tempCategories.includes(name) || name === "전체") {
+			setError("이미 존재하는 카테고리입니다.");
+			return;
+		}
+		const categoryIndex = tempCategories.findIndex((c) => c === editTarget);
+		if (categoryIndex === -1) return;
+		const newCategories = [...tempCategories];
+		newCategories[categoryIndex] = name;
+		
+		onChangeCategories(newCategories);
+		setNewCategory("");
+		setEditTarget(null);
+		onEditing(true);
+		inputRef.current?.focus();
+	}
 
 	const handleMoveCategory = useCallback((name, direction) => {
 		if (name === "전체" || direction === 0) return;
@@ -81,40 +108,89 @@ export default function ModalCategory({
 	return (
 		<>
 			<div className="flex flex-col gap-5 px-6 py-5">
-				<form
-					onSubmit={handleAdd}
-					className="flex flex-col gap-2"
-				>
-					<label
-						htmlFor="new-category"
-						className="text-xs font-medium text-slate-600"
+				{editTarget ? (
+					<form
+						onSubmit={handleRename}
+						className="flex flex-col gap-2"
 					>
-						새 카테고리 추가
-					</label>
-					<div className="flex gap-2">
-						<input
-							ref={inputRef}
-							id="new-category"
-							type="text"
-							value={newCategory}
-							onChange={(e) => {
-								setNewCategory(e.target.value);
-								if (error) setError("");
-							}}
-							placeholder="예: 아티클"
-							className="flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-						/>
-						<button
-							type="submit"
-							className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 active:bg-indigo-700"
+						<label
+							htmlFor="edit-category"
+							className="text-xs font-medium text-slate-600"
 						>
-							추가
-						</button>
-					</div>
-					{error && (
-						<p className="text-xs text-rose-500">{error}</p>
-					)}
-				</form>
+							카테고리 이름 변경
+						</label>
+						<div className="flex gap-2">
+							<input
+								ref={inputRef}
+								id="edit-category"
+								type="text"
+								value={newCategory}
+								onChange={(e) => {
+									setNewCategory(e.target.value);
+									if (error) setError("");
+								}}
+								placeholder="예: 아티클"
+								className="flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+							/>
+							<button
+								type="button"
+								className="rounded-lg bg-gray-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600 active:bg-gray-700"
+								onClick={(e) => {
+									e.preventDefault();
+									setEditTarget(null);
+									setNewCategory("");
+									setError("");
+								}}
+							>
+								취소
+							</button>
+							<button
+								type="submit"
+								className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 active:bg-indigo-700"
+							>
+								변경
+							</button>
+						</div>
+						{error && (
+							<p className="text-xs text-rose-500">{error}</p>
+						)}
+					</form>
+				) : (
+					<form
+						onSubmit={handleAdd}
+						className="flex flex-col gap-2"
+					>
+						<label
+							htmlFor="new-category"
+							className="text-xs font-medium text-slate-600"
+						>
+							새 카테고리 추가
+						</label>
+						<div className="flex gap-2">
+							<input
+								ref={inputRef}
+								id="new-category"
+								type="text"
+								value={newCategory}
+								onChange={(e) => {
+									setNewCategory(e.target.value);
+									if (error) setError("");
+								}}
+								placeholder="예: 아티클"
+								className="flex-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+							/>
+							<button
+								type="submit"
+								className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600 active:bg-indigo-700"
+							>
+								추가
+							</button>
+						</div>
+						{error && (
+							<p className="text-xs text-rose-500">{error}</p>
+						)}
+					</form>
+				)}
 
 				<div className="flex flex-col gap-2">
 					<p className="text-xs font-medium text-slate-600">
@@ -174,6 +250,32 @@ export default function ModalCategory({
 											<i className="ri-arrow-down-s-line" />
 										</button>
 										{category !== "기타" ? (
+											<button
+												type="button"
+												aria-label={`${category} 이름 변경`}
+												onClick={() => {
+													if (editTarget === category) {
+														setEditTarget(null);
+														setNewCategory("");
+														setError("");
+														return;
+													}
+													setEditTarget(category);
+													setNewCategory(category);
+												}}
+												className={[
+													"flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-500",
+													editTarget === category ? "border-indigo-700 bg-indigo-500 text-white hover:border-indigo-800 hover:bg-indigo-600 hover:text-white" : "",
+												].join(" ")}
+											>
+												<i className="ri-pencil-line" />
+											</button>
+										) : (
+											<div className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-100 text-slate-300 cursor-not-allowed">
+												<i className="ri-pencil-line" />
+											</div>
+										)}
+										{category !== "기타" && editTarget === null ? (
 											<button
 												type="button"
 												aria-label={`${category} 삭제`}

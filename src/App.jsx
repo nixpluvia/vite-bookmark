@@ -224,7 +224,7 @@ export default function App() {
 					onChangeCategories={setTempCategories}
 					isEditing={isCategoryEditing}
 					onEditing={setIsCategoryEditing}
-					onChangeCategory={handleChangeCategoryTarget}
+					onChangeDeleteTarget={handleChangeCategoryTarget}
 					onDeleteCategory={handleDeleteCategory}
 				/>
 			</Modal>
