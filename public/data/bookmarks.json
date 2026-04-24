@@ -1,0 +1,102 @@
+{
+  "bookmarks": [
+    {
+      "id": "adedaf67-9552-4c3c-8ed5-e10e3264dbd8",
+      "createdAt": "2026-04-23T09:11:34.004Z",
+      "rating": 0,
+      "category": "기타",
+      "url": "https://tailwindcss.com/docs/colors",
+      "thumbnail": "",
+      "title": "",
+      "description": ""
+    },
+    {
+      "id": "c0a3a9cf-d3a1-4a80-bd15-c3b270b46ac4",
+      "createdAt": "2026-04-22T04:32:57.450Z",
+      "rating": 1,
+      "category": "디자인",
+      "url": "https://isplus.com/article/view/isp202510130087",
+      "thumbnail": "/images/img_1776925068819.webp",
+      "title": "이미지 저장 테스트4",
+      "description": "이미지 저장 테스트4"
+    },
+    {
+      "id": "8a2d04d7-67d2-4a56-93e9-254a4f0bdfdd",
+      "createdAt": "2026-04-22T08:06:21.432Z",
+      "rating": 1,
+      "category": "기타",
+      "url": "https://www.google.com/search?sca_esv=17de63e8a22fe1ba&rlz=1C1QCDH_koKR1177KR1177&sxsrf=ANbL-n5MAt2nkhLpj66CsfFN-GccwKhoXw:1776822656690&udm=2&fbs=ADc_l-bD_nyrjATWBKup7flJ4rea5XFXsPHwMjGsTekJ1HCohBAQ3Hh19DqzlO7wr7YUgTdA6AIvvuoLcS3uB5TUiBhABt596yRRtqOsYbzXfQs1vsKOVXn_6_6xPXpaJ6NYNDw8FaSoluH4pXYAWtc8MxWGb66ZeRCCPRclK67nFTdSI6Y2Urwl6N7VKgFSbdHgO46ptJH3M9JYPceDInkQ35-n0OfsVhD8mSjb_Lv0T4ZzSS9fskA&q=%EB%A6%AC%EC%A6%88&sa=X&ved=2ahUKEwjhrJ-arICUAxVl4zQHHeKxMb4QtKgLegQIRxAB&biw=1280&bih=985&dpr=1#sv=CAMSVhoyKhBlLXNzT1UwYXV2NVNocGxNMg5zc09VMGF1djVTaHBsTToOT0Z1RGRNeEo4bW1FRE0gBCocCgZtb3NhaWMSEGUtc3NPVTBhdXY1U2hwbE0YADABGAcgoev16wNKCBABGAEgASgB",
+      "thumbnail": "",
+      "title": "리즈 검색",
+      "description": "asdasd"
+    },
+    {
+      "id": "da6392e7-a8ee-4c96-b5ab-42384742f5d4",
+      "createdAt": "2026-04-21T05:56:26.455Z",
+      "rating": 1,
+      "category": "개발",
+      "url": "https://ko.react.dev/learn/thinking-in-react",
+      "title": "react",
+      "description": "",
+      "thumbnail": ""
+    },
+    {
+      "id": "5626d691-7e7e-407f-a41d-42cd78e5ae1d",
+      "createdAt": "2026-04-20T08:46:25.789Z",
+      "rating": 1,
+      "category": "기타",
+      "url": "http://localhost:5173",
+      "title": "asdasdasd",
+      "description": "13212313",
+      "thumbnail": ""
+    },
+    {
+      "id": "fd9d63ef-5d45-4e61-aa58-01b7ce4142a2",
+      "createdAt": "2026-04-21T07:21:57.143Z",
+      "rating": 1,
+      "category": "기타",
+      "url": "https://www.krds.go.kr/html/site/component/component_08_05.html",
+      "title": "asdasd",
+      "description": "asdasd",
+      "thumbnail": ""
+    },
+    {
+      "id": "bcec6d2b-a651-4f4e-a31a-8ee196ebbdf2",
+      "createdAt": "2026-04-23T01:20:02.140Z",
+      "rating": 1,
+      "category": "기타",
+      "url": "https://josiah0208.tistory.com/7",
+      "thumbnail": "",
+      "title": "",
+      "description": ""
+    },
+    {
+      "id": "f685a3a1-6f5a-444a-b1b0-28e1919f738c",
+      "createdAt": "2026-04-23T01:19:57.100Z",
+      "rating": 1,
+      "category": "기타",
+      "url": "https://velog.io/@sumi-0011/framer-motion-dnd",
+      "thumbnail": "",
+      "title": "",
+      "description": ""
+    },
+    {
+      "id": "f5983b67-fba2-4062-af92-ad3f3724532f",
+      "createdAt": "2026-04-23T06:19:09.393Z",
+      "rating": 0,
+      "category": "기타",
+      "url": "https://console.firebase.google.com/project/bookmark-27688/overview?hl=ko",
+      "thumbnail": "",
+      "title": "",
+      "description": ""
+    }
+  ],
+  "categories": [
+    "전체",
+    "개발",
+    "디자인",
+    "참고자료",
+    "영상",
+    "기타"
+  ]
+}
