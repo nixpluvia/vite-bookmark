@@ -1,21 +1,24 @@
 import { use, useState } from 'react'
-import RatingStar from './RatingStar'
 import { formatDistanceToNow } from "date-fns";
 import { ko } from 'date-fns/locale';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import useBookmarksStore from '../store/useBookmarksStore';
+import RatingStar from '../RatingStar'
+import useStore from '../../store/useStore';
+import useBookmarksStore from '../../store/useBookmarksStore';
 
 /**
  * 북마크 카드 컴포넌트
  * @param {object}   bookmark   - 북마크 데이터
  * @param {function} onRate     - (id, rating) => void
  * @param {function} onDelete   - (id) => void
- * @param {function} onEdit     - (bookmark) => void
- * @param {function} onOpenModalImage - (imageUrl) => void
+ * @param {function} onEditBookmark     - (bookmark) => void
+ * @param {function} onOpenImageModal - (imageUrl) => void
  */
-export default function BookmarkCard({ id, cardTemplate, bookmark, onDelete, onEdit, onOpenModalImage, isDragDisabled }) {
+export default function BookmarkCard({ id, bookmark, onDelete, onEditBookmark, onOpenImageModal, isDragDisabled }) {
+  const cardTemplate = useStore((state) => state.cardTemplate);
   const onRate = useBookmarksStore((state) => state.actions.editBookmark);
+
   const {
     attributes,
     listeners,
@@ -34,15 +37,15 @@ export default function BookmarkCard({ id, cardTemplate, bookmark, onDelete, onE
   return (
     <li className="h-full" ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {cardTemplate === "thumbnail" ? (
-        thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage })
+        thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal })
       ) : (
-        defaultCard({ bookmark, onRate, onDelete, onEdit })
+        defaultCard({ bookmark, onRate, onDelete, onEditBookmark })
       )}
     </li>
   )
 }
 
-function defaultCard({ bookmark, onRate, onDelete, onEdit }) {
+function defaultCard({ bookmark, onRate, onDelete, onEditBookmark }) {
   const { id, url, title, description, category, rating, createdAt } = bookmark
 
   const domain = (() => {
@@ -84,7 +87,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEdit }) {
           <button
             type="button"
             aria-label="편집"
-            onClick={() => onEdit(bookmark)}
+            onClick={() => onEditBookmark(bookmark)}
             className="flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
           >
             <i className="ri-edit-line text-sm" />
@@ -92,7 +95,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEdit }) {
           <button
             type="button"
             aria-label="삭제"
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => onDelete(bookmark)}
             className="flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           >
             <i className="ri-delete-bin-line text-sm" />
@@ -117,7 +120,10 @@ function defaultCard({ bookmark, onRate, onDelete, onEdit }) {
         </div>
         <RatingStar
           rating={rating}
-          onChange={(r) => onRate(id, r)}
+          onChange={(r) => {
+            if (r === rating) r = 0
+            onRate(id, {rating: r})
+          }}
           size="text-sm"
         />
       </div>
@@ -126,7 +132,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEdit }) {
 }
 
 
-function thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage }) {
+function thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal }) {
   const { id, url, title, description, category, rating, memo, createdAt, thumbnail } = bookmark
 
   const domain = (() => {
@@ -143,7 +149,7 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage })
         {thumbnail ? (
           <button
             type="button"
-            onClick={() => onOpenModalImage(thumbnail)}
+            onClick={() => onOpenImageModal(thumbnail)}
             className="flex overflow-hidden w-full aspect-[16/9] items-center justify-center bg-slate-50 object-contain"
           >
             <img src={thumbnail} alt="" className="w-full h-full object-cover" />
@@ -181,7 +187,7 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage })
           <button
             type="button"
             aria-label="편집"
-            onClick={() => onEdit(bookmark)}
+            onClick={() => onEditBookmark(bookmark)}
             className="flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
           >
             <i className="ri-edit-line text-sm" />
@@ -189,7 +195,7 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage })
           <button
             type="button"
             aria-label="삭제"
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => onDelete(bookmark)}
             className="flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           >
             <i className="ri-delete-bin-line text-sm" />
@@ -207,7 +213,10 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEdit, onOpenModalImage })
         </div>
         <RatingStar
           rating={rating}
-          onChange={(r) => onRate(id, r)}
+          onChange={(r) => {
+            if (r === rating) r = 0
+            onRate(id, {rating: r})
+          }}
           size="text-sm"
         />
       </div>

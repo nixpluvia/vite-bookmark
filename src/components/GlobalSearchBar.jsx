@@ -2,20 +2,22 @@ import { useMemo, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { format, parseISO, isValid } from "date-fns";
 import "react-day-picker/style.css";
+import { shallow } from 'zustand/shallow';
+import { useStore, isFiltered } from "../store/useStore";
 
 export default function GlobalSearchBar({ 
-    searchQuery,
-    setSearchQuery,
-    ratingFilter,
-    setRatingFilter,
-    dateFrom,
-    setDateFrom,
-    dateTo,
-    setDateTo,
-    resetFilter,
-    hasFilter,
     handleOpenAddBookmark
  }) {
+    const searchQuery = useStore((state) => state.searchQuery);
+    const setSearchQuery = useStore((state) => state.actions.setSearchQuery);
+    const ratingFilter = useStore((state) => state.ratingFilter);
+    const setRatingFilter = useStore((state) => state.actions.setRatingFilter);
+    const dateFrom = useStore((state) => state.dateFrom);
+    const setDateFrom = useStore((state) => state.actions.setDateFrom);
+    const dateTo = useStore((state) => state.dateTo);
+    const setDateTo = useStore((state) => state.actions.setDateTo);
+    const resetFilter = useStore((state) => state.actions.resetFilter);
+    const hasFilter = useStore(isFiltered, shallow);
     const [openPicker, setOpenPicker] = useState(null);
 
     const fromDateValue = useMemo(() => {

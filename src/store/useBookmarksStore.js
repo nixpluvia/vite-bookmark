@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const INITIAL_CATEGORIES = ['전체', '개발', '디자인', '참고자료', '영상', '기타']
+const INITIAL_CATEGORIES = ['개발', '디자인', '참고자료', '영상', '기타']
 
 const useBookmarksStore = create((set, get) => ({
   bookmarks: [],
@@ -11,7 +11,7 @@ const useBookmarksStore = create((set, get) => ({
     setCategories: (categories) => set({ categories }),
     initData: async () => {
       try {
-        const response = await fetch('/public/data/bookmarks.json')
+        const response = await fetch('/api/read-bookmarks', { method: 'POST' })
         const data = await response.json()
         if (data && data.bookmarks && data.categories) {
           set({ bookmarks: data.bookmarks ? data.bookmarks : [], categories: data.categories ? data.categories : INITIAL_CATEGORIES, isInitialized: true })
@@ -59,13 +59,21 @@ const useBookmarksStore = create((set, get) => ({
         nextPatch.thumbnail = await uploadImageFile(imageFormData);
       }
 
+      let newBookmarks = get().bookmarks.map((b) => (b.id === id ? { ...b, ...nextPatch } : b))
+      if (nextPatch.rating !== matchData.rating) {
+        newBookmarks = newBookmarks.sort((a, b) => b.rating - a.rating);
+      }
+
       set((state) => ({
-        bookmarks: state.bookmarks.map((b) => (b.id === id ? { ...b, ...nextPatch } : b)),
+        bookmarks: newBookmarks,
       }))
 
       saveToStorage({ bookmarks: get().bookmarks, categories: get().categories })
     },
-    updateBookmark: async (newBookmarks) => {
+    updateBookmark: async (updater) => {
+      if (!updater) return;
+      const newBookmarks = updater(get().bookmarks);
+      if (!newBookmarks) return;
       set((state) => ({
         bookmarks: newBookmarks,
       }))
@@ -81,9 +89,6 @@ const useBookmarksStore = create((set, get) => ({
     },
     updateCategories: (newCategories) => {
       let normalizedCategories = [...newCategories]
-      if (!normalizedCategories.includes('전체')) {
-        normalizedCategories = ['전체', ...normalizedCategories]
-      }
       if (!normalizedCategories.includes('기타')) {
         normalizedCategories = [...normalizedCategories, '기타']
       }
@@ -130,7 +135,7 @@ const useBookmarksStore = create((set, get) => ({
     },
     deleteCategory: (name) => {
       set((state) => {
-        if (name === '전체' || name === '기타') return state
+        if (name === '기타') return state
         if (!state.categories.includes(name)) return state
 
         const hasEtc = state.categories.includes('기타')

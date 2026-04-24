@@ -25,7 +25,20 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           // /api/save-bookmarks 경로로 온 POST 요청을 처리
-          if (req.url === '/api/save-bookmarks' && req.method === 'POST') {
+          if (req.url === '/api/read-bookmarks' && req.method === 'POST') {
+            const filePath = resolve(rootDir, 'public/data/bookmarks.json');
+            fs.readFile(filePath, 'utf-8', (err, data) => {
+              if (err) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: 'Failed to read bookmarks' }));
+                return;
+              }
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(data);
+            });
+          } else if (req.url === '/api/save-bookmarks' && req.method === 'POST') {
             let body = '';
             req.on('data', chunk => { body += chunk; });
             req.on('end', () => {

@@ -1,77 +1,53 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, use } from "react";
 // import { useBookmarks } from "./hooks/useBookmarks";
+import useStore from "./store/useStore";
 import useBookmarksStore from "./store/useBookmarksStore";
 import { useClipboard } from "./hooks/useClipboard";
 import Sidebar from "./components/Sidebar";
 import GlobalSearchBar from "./components/GlobalSearchBar";
-import BookmarkUtils from "./components/BookmarkUtils";
-import BookmarkList from "./components/BookmarkList";
-import Modal from "./components/Modal";
-import ModalCategory from "./components/ModalCategory";
-import ModalImage from "./components/ModalImage";
+import BookmarkContent from "./components/bookmark/index";
+import Modal from "./components/modal/Index";
+import ModalBookmark from "./components/modal/ModalBookmark";
+import ModalCategory from "./components/modal/ModalCategory";
+import ModalImage from "./components/modal/ModalImage";
+import Confirm from "./components/Confirm";
+import { ca } from "date-fns/locale";
+import { set } from "date-fns";
 
 export default function App() {
+	const isInitialized = useBookmarksStore((state) => state.isInitialized);
 	const initData = useBookmarksStore((state) => state.actions.initData);
 	const bookmarks = useBookmarksStore((state) => state.bookmarks);
 	const categories = useBookmarksStore((state) => state.categories);
 	const addBookmark = useBookmarksStore((state) => state.actions.addBookmark);
 	const editBookmark = useBookmarksStore((state) => state.actions.editBookmark);
-	const deleteBookmark = useBookmarksStore((state) => state.actions.deleteBookmark);
-	const updateCategories = useBookmarksStore((state) => state.actions.updateCategories);
+
+	// clipboard
+	const [pendingUrl, setPendingUrl] = useState("");
+	const [pendingImage, setPendingImage] = useState(null);
+	const [pendingImageUrl, setPendingImageUrl] = useState(null);
 
 	// 모달 상태
 	const [modalOpen, setModalOpen] = useState(false);
 	const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-	const [pendingUrl, setPendingUrl] = useState("");
-	const [editTarget, setEditTarget] = useState(null);
-	const [pendingImage, setPendingImage] = useState(null);
-	const [pendingImageUrl, setPendingImageUrl] = useState(null);
+	const [imageModalOpen, setImageModalOpen] = useState(false);
 	const [modalSession, setModalSession] = useState(0);
 	const [categoryModalSession, setCategoryModalSession] = useState(0);
-	const [modalImageOpen, setModalImageOpen] = useState(false);
+	const [editTarget, setEditTarget] = useState(null);
 	const [modalImageUrl, setModalImageUrl] = useState(null);
 
 	// 필터 / 검색
-	const [activeCategory, setActiveCategory] = useState("전체");
-	const [searchQuery, setSearchQuery] = useState("");
-	const [ratingFilter, setRatingFilter] = useState(0); // 0 = 전체
-	const [dateFrom, setDateFrom] = useState("");
-	const [dateTo, setDateTo] = useState("");
+	const activeCategory = useStore((state) => state.activeCategory);
 
-	const [cardTemplate, setCardTemplate] = useState("default");
-	const [sort, setSort] = useState({
-		type: null, // createdAt, title
-		order: null,
-	})
-	const [ableSortCard, setAbleSortCard] = useState(false);
+	// 카테고리 관리
+	const [tempCategories, setTempCategories] = useState(categories);
+	const [categoryTarget, setCategoryTarget] = useState(null);
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [isCategoryEditing, setIsCategoryEditing] = useState(false);
 
 	useEffect(() => {
-		initData();
-	}, [initData]);
-	
-
-
-	const handleChangeTemplate = useCallback((template) => {
-		setCardTemplate(template);
-	}, []);
-
-	const handleToggleSortCard = useCallback(() => {
-		setAbleSortCard((prev) => !prev);
-	}, []);
-
-	const hasFilter =
-		searchQuery.trim() !== "" ||
-		ratingFilter > 0 ||
-		dateFrom !== "" ||
-		dateTo !== "" ||
-		sort.type !== null;
-
-	const resetFilter = useCallback(() => {
-		setSearchQuery("");
-		setRatingFilter(0);
-		setDateFrom("");
-		setDateTo("");
-	}, []);
+		if (!isInitialized) initData();
+	}, [initData, isInitialized]);
 
 	const clearPendingImageState = useCallback(() => {
 		setPendingImage(null);
@@ -98,8 +74,17 @@ export default function App() {
 	}, [modalOpen]);
 	useClipboard(handleUrlDetected);
 
-	// 편집 모달 오픈
-	const openEditModal = useCallback((bookmark) => {
+
+	// 북마크 모달 ------
+	const handleOpenAddBookmark = useCallback(() => {
+		setModalSession((prev) => prev + 1);
+		setEditTarget(null);
+		setPendingUrl("");
+		clearPendingImageState();
+		setModalOpen(true);
+	}, [clearPendingImageState]);
+
+	const handleOpenEditBookmark = useCallback((bookmark) => {
 		setModalSession((prev) => prev + 1);
 		setEditTarget(bookmark);
 		setPendingUrl("");
@@ -126,33 +111,6 @@ export default function App() {
 		[editTarget, addBookmark, editBookmark, handleCloseModal],
 	);
 
-	const handleOpenAddBookmark = useCallback(() => {
-		setModalSession((prev) => prev + 1);
-		setEditTarget(null);
-		setPendingUrl("");
-		clearPendingImageState();
-		setModalOpen(true);
-	}, [clearPendingImageState]);
-
-	const handleOpenCategoryModal = useCallback(() => {
-		setCategoryModalSession((prev) => prev + 1);
-		setCategoryModalOpen(true);
-	}, []);
-
-	const handleCloseCategoryModal = useCallback(() => {
-		setCategoryModalOpen(false);
-	}, []);
-
-	const handleUpdateCategories = useCallback(
-		(newCategories) => {
-			updateCategories(newCategories);
-			if (!newCategories.includes(activeCategory)) {
-				setActiveCategory("전체");
-			}
-		},
-		[activeCategory, updateCategories],
-	);
-
 	const handleDeletePendingThumbnail = useCallback(
 		() => {
 			clearPendingImageState();
@@ -160,103 +118,62 @@ export default function App() {
 		[clearPendingImageState],
 	);
 
-	const handleOpenModalImage = useCallback((imageUrl) => {
-		setModalImageUrl(imageUrl);
-		setModalImageOpen(true);
+
+	// 카테고리 모달 ------
+	const handleOpenCategoryModal = useCallback(() => {
+		setCategoryModalSession((prev) => prev + 1);
+		setTempCategories(categories);
+		setCategoryModalOpen(true);
+	}, [categories]);
+
+	const handleCloseCategoryModal = useCallback(() => {
+		setTempCategories(null);
+		setCategoryModalOpen(false);
+	}, []);
+	
+	const handleChangeCategoryTarget = useCallback((category) => {
+		setCategoryTarget(category);
 	}, []);
 
-	const handleCloseModalImage = useCallback(() => {
-		setModalImageUrl(null);
-		setModalImageOpen(false);
-	}, []);
-
-	const handleSortChange = useCallback((type) => {
-		if (type == null) {
-			setSort({ type: null, order: null });
+	const handleDeleteCategory = (category) => {
+		if (category === "기타") {
+			alert("기타 카테고리는 삭제할 수 없습니다.");
 			return;
 		}
-		setSort((prev) => ({
-			type,
-			order: prev.type === type && prev.order === "asc" ? "desc" : "asc",
-		}));
+		setCategoryTarget(category);
+		setConfirmOpen(true);
+	};
+
+	const handleConfirmDeleteCategory = useCallback(() => {
+		if (!categoryTarget) return;
+
+		const changeCategories = [...tempCategories];
+		const targetIndex = changeCategories.indexOf(categoryTarget);
+		if (targetIndex < 0) return;
+		changeCategories.splice(targetIndex, 1);
+		setTempCategories(changeCategories);
+		setCategoryTarget(null);
+		setIsCategoryEditing(true);
+		setConfirmOpen(false);
+	}, [categoryTarget]);
+
+	
+	// 이미지 자세히보기 모달 ------
+	const handleOpenImageModal = useCallback((imageUrl) => {
+		setModalImageUrl(imageUrl);
+		setImageModalOpen(true);
 	}, []);
 
+	const handleCloseImageModal = useCallback(() => {
+		setModalImageUrl(null);
+		setImageModalOpen(false);
+	}, []);
 
-	// 카테고리별 카운트
-	const counts = useMemo(() => {
-		const map = { 전체: bookmarks.length };
-		bookmarks.forEach((b) => {
-			map[b.category] = (map[b.category] ?? 0) + 1;
-		});
-		return map;
-	}, [bookmarks]);
-
-	// 필터링
-	const filtered = useMemo(() => {
-		if (bookmarks.length === 0) return [];
-		let list =
-			activeCategory === "전체"
-				? bookmarks
-				: bookmarks.filter((b) => b.category === activeCategory);
-		if (searchQuery.trim()) {
-			const q = searchQuery.toLowerCase();
-			list = list.filter(
-				(b) =>
-					b.title?.toLowerCase().includes(q) ||
-					b.url?.toLowerCase().includes(q) ||
-					b.description?.toLowerCase().includes(q) ||
-					b.memo?.toLowerCase().includes(q),
-			);
-		}
-		if (ratingFilter > 0) {
-			list = list.filter((b) => b.rating >= ratingFilter);
-		}
-		if (dateFrom) {
-			const from = new Date(dateFrom);
-			from.setHours(0, 0, 0, 0);
-			list = list.filter((b) => new Date(b.createdAt) >= from);
-		}
-		if (dateTo) {
-			const to = new Date(dateTo);
-			to.setHours(23, 59, 59, 999);
-			list = list.filter((b) => new Date(b.createdAt) <= to);
-		}
-		if (sort.type === "createdAt") {
-			list = [...list].sort((a, b) =>
-				sort.order === "asc"
-					? new Date(a.createdAt) - new Date(b.createdAt)
-					: new Date(b.createdAt) - new Date(a.createdAt),
-			);
-		} else if (sort.type === "title") {
-			list = [...list].sort((a, b) => {
-				const titleA = a.title?.toLowerCase() ?? "";
-				const titleB = b.title?.toLowerCase() ?? "";
-				if (titleA < titleB) return sort.order === "asc" ? -1 : 1;
-				if (titleA > titleB) return sort.order === "asc" ? 1 : -1;
-				return 0;
-			});
-		}
-		// 최종적으로 별점순으로 정렬
-		list = list.sort((a, b) => b.rating - a.rating);
-		return list;
-	}, [
-		bookmarks,
-		activeCategory,
-		searchQuery,
-		ratingFilter,
-		dateFrom,
-		dateTo,
-		sort,
-	]);
 
 	return (
 		<div className="flex h-screen overflow-hidden bg-slate-50">
 			{/* 사이드바 */}
 			<Sidebar
-				categories={categories}
-				activeCategory={activeCategory}
-				counts={counts}
-				onSelect={setActiveCategory}
 				onOpenCategoryModal={handleOpenCategoryModal}
 			/>
 
@@ -264,71 +181,77 @@ export default function App() {
 			<main className="flex flex-col flex-1 min-w-0 overflow-hidden">
 				{/* 상단 헤더 */}
 				<GlobalSearchBar
-					searchQuery={searchQuery}
-					setSearchQuery={setSearchQuery}
-					ratingFilter={ratingFilter}
-					setRatingFilter={setRatingFilter}
-					dateFrom={dateFrom}
-					setDateFrom={setDateFrom}
-					dateTo={dateTo}
-					setDateTo={setDateTo}
-					resetFilter={resetFilter}
-					hasFilter={hasFilter}
 					handleOpenAddBookmark={handleOpenAddBookmark}
 				/>
 
 				{/* 북마크 그리드 */}
-				<div className="flex-1 overflow-y-auto px-6 py-5">
-					<BookmarkUtils
-						filteredBookmarks={filtered}
-						cardTemplate={cardTemplate}
-						onChangeTemplate={handleChangeTemplate}
-						hasFilter={hasFilter}
-						onToggleSortCard={handleToggleSortCard}
-						ableSortCard={ableSortCard}
-						onChangeSort={handleSortChange}
-						sort={sort}
-					/>
-					<BookmarkList
-						filteredBookmarks={filtered}
-						hasFilter={hasFilter}
-						onEdit={openEditModal}
-						onAdd={handleOpenAddBookmark}
-						onOpenModalImage={handleOpenModalImage}
-						cardTemplate={cardTemplate}
-						ableSortCard={ableSortCard}
-					/>
-				</div>
+				<BookmarkContent
+					onAddBookmark={handleOpenAddBookmark}
+					onEditBookmark={handleOpenEditBookmark}
+					onOpenImageModal={handleOpenImageModal}
+				/>
 			</main>
 
 			{/* 모달 */}
 			<Modal
-				key={modalSession}
+				key={'m' + modalSession}
+				title={editTarget ? "북마크 편집" : "북마크 추가"}
 				isOpen={modalOpen}
-				initialUrl={pendingUrl}
-				initialImage={pendingImage}
-				initialImageUrl={pendingImageUrl}
-				editTarget={editTarget}
-				activeCategory={activeCategory}
-				categories={categories}
-				onSubmit={handleModalSubmit}
 				onClose={handleCloseModal}
-				onDeleteThumbnail={handleDeletePendingThumbnail}
-			/>
+			>	
+				<ModalBookmark
+					isOpen={modalOpen}
+					initialUrl={pendingUrl}
+					initialImage={pendingImage}
+					initialImageUrl={pendingImageUrl}
+					editTarget={editTarget}
+					activeCategory={activeCategory}
+					onClose={handleCloseModal}
+					onSubmit={handleModalSubmit}
+					onDeleteThumbnail={handleDeletePendingThumbnail}
+				/>
+			</Modal>
 
-			<ModalCategory
-				key={categoryModalSession}
+			<Modal
+				key={'mc' + categoryModalSession}
+				title={"카테고리 관리"}
 				isOpen={categoryModalOpen}
-				categories={categories}
-				onUpdateCategories={handleUpdateCategories}
 				onClose={handleCloseCategoryModal}
+			>	
+				<ModalCategory
+					onClose={handleCloseCategoryModal}
+					tempCategories={tempCategories}
+					onChangeCategories={setTempCategories}
+					isEditing={isCategoryEditing}
+					onEditing={setIsCategoryEditing}
+					onChangeCategory={handleChangeCategoryTarget}
+					onDeleteCategory={handleDeleteCategory}
+				/>
+			</Modal>
+
+			<Modal
+				size="xl"
+				title={"이미지 자세히보기"}
+				isOpen={imageModalOpen}
+				onClose={handleCloseImageModal}
+			>
+				<ModalImage
+					isOpen={imageModalOpen}
+					imageUrl={modalImageUrl}
+					onClose={handleCloseImageModal}
+				/>
+			</Modal>
+
+			<Confirm
+				isOpen={confirmOpen}
+				type={"delete"}
+				title={"카테고리 삭제"}
+				message={"카테고리를 삭제할까요?"}
+				target={categoryTarget}
+				onCancel={() => setConfirmOpen(false)}
+				onConfirm={handleConfirmDeleteCategory}
 			/>
 
-			<ModalImage
-				isOpen={modalImageOpen}
-				imageUrl={modalImageUrl}
-				onClose={handleCloseModalImage}
-			/>
 		</div>
 	);
 }

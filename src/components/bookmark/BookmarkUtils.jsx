@@ -1,9 +1,19 @@
 import { useState, useMemo } from "react";
+import { useStore, isFiltered } from "../../store/useStore";
+import { shallow } from 'zustand/shallow';
 
 /**
  * 북마크 유틸 컴포넌트
  */
-export default function BookmarkList({ filteredBookmarks, cardTemplate, onChangeTemplate, hasFilter, onToggleSortCard, ableSortCard, onChangeSort, sort }) {
+export default function BookmarkList({ filteredNum }) {
+	const cardTemplate = useStore((state) => state.cardTemplate);
+	const onChangeTemplate = useStore((state) => state.actions.onChangeTemplate);
+	const sort = useStore((state) => state.sort);
+	const changeSort = useStore((state) => state.actions.changeSort);
+	const ableSortCard = useStore((state) => state.ableSortCard);
+	const toggleAbleSortCard = useStore((state) => state.actions.toggleAbleSortCard);
+	const hasFilter = useStore(isFiltered, shallow);
+
 	return (
 		<>
 			{/* 상단 정보 및 템플릿 선택 */}
@@ -18,7 +28,7 @@ export default function BookmarkList({ filteredBookmarks, cardTemplate, onChange
 						)}
 						총
 						<span className="px-0.5 font-medium text-slate-600">
-							{filteredBookmarks.length}
+							{filteredNum}
 						</span>
 						개
 					</p>
@@ -29,13 +39,13 @@ export default function BookmarkList({ filteredBookmarks, cardTemplate, onChange
 							<button
 								type="button"
 								className={
-									["inline-flex items-center gap-1 text-xs",
+									["inline-flex items-center gap-1 text-xs transition-colors cursor-pointer",
 									sort.type === "createdAt"
 										? "text-indigo-500 font-medium"
 										: "text-slate-400 hover:text-slate-700",
 									].join(" ")
 								}
-								onClick={() => onChangeSort("createdAt")}
+								onClick={() => changeSort("createdAt")}
 							>
 								최신순
 								{sort.type === "createdAt" && sort.order === "desc" && (
@@ -48,13 +58,13 @@ export default function BookmarkList({ filteredBookmarks, cardTemplate, onChange
 							<button
 								type="button"
 								className={
-									["inline-flex items-center gap-1 text-xs",
+									["inline-flex items-center gap-1 text-xs transition-colors cursor-pointer",
 									sort.type === "title"
 										? "text-indigo-500 font-medium"
 										: "text-slate-400 hover:text-slate-700",
 									].join(" ")
 								}
-								onClick={() => onChangeSort("title")}
+								onClick={() => changeSort("title")}
 							>
 								가나다순
 								{sort.type === "title" && sort.order === "desc" && (
@@ -67,7 +77,12 @@ export default function BookmarkList({ filteredBookmarks, cardTemplate, onChange
 						</div>
 						<button
 							type="button"
-							onClick={() => onChangeSort(null)}
+							className={
+								["inline-flex items-center gap-1 text-xs text-slate-400 transition-colors",
+									sort.type !== null ? "hover:text-slate-700 cursor-pointer" : "",
+								].join(" ")
+							}
+							onClick={() => changeSort(null)}
 						>
 							<i className="ri-refresh-line text-base"></i>
 						</button>
@@ -84,7 +99,7 @@ export default function BookmarkList({ filteredBookmarks, cardTemplate, onChange
 									? "bg-rose-500 hover:bg-rose-600 active:bg-rose-700"
 									: "bg-slate-500 hover:bg-slate-600 active:bg-slate-700",
 							].join(" ")}
-							onClick={onToggleSortCard}
+							onClick={toggleAbleSortCard}
 						>
 							<i className="ri-drag-drop-line text-base"></i>순서
 							편집

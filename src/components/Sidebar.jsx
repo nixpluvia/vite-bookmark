@@ -1,12 +1,25 @@
+import useBookmarksStore from '../store/useBookmarksStore';
+import useStore from '../store/useStore';
+
 /**
  * 카테고리 필터 사이드바
- * @param {string[]} categories      - 전체 카테고리 목록
- * @param {string}   activeCategory  - 현재 선택된 카테고리
- * @param {object}   counts          - { [category]: number }
- * @param {function} onSelect        - (category: string) => void
  * @param {function} onOpenCategoryModal - 카테고리 관리 모달 열기
  */
-export default function Sidebar({ categories, activeCategory, counts, onSelect, onOpenCategoryModal }) {
+export default function Sidebar({ onOpenCategoryModal }) {
+  const bookmarks = useBookmarksStore((state) => state.bookmarks);
+  const categories = ["전체", ...useBookmarksStore((state) => state.categories)];
+  const activeCategory = useStore((state) => state.activeCategory);
+  const setActiveCategory = useStore((state) => state.actions.setActiveCategory);
+  const updateCategory = useBookmarksStore((state) => state.actions.updateCategory);
+
+  const counts = useMemo(() => {
+    const map = { 전체: bookmarks.length };
+    bookmarks.forEach((b) => {
+      map[b.category] = (map[b.category] ?? 0) + 1;
+    });
+    return map;
+  }, [bookmarks]);
+
   return (
     <aside className="flex flex-col w-56 shrink-0 bg-white border-r border-slate-200 min-h-0">
       {/* 로고 영역 */}
@@ -30,7 +43,7 @@ export default function Sidebar({ categories, activeCategory, counts, onSelect, 
             <button
               key={cat}
               type="button"
-              onClick={() => onSelect(cat)}
+              onClick={() => setActiveCategory(cat)}
               className={[
                 'flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors text-left',
                 isActive
