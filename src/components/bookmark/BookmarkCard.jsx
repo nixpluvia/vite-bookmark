@@ -37,15 +37,15 @@ export default function BookmarkCard({ id, bookmark, onDelete, onEditBookmark, o
   return (
     <li className="h-full" ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {cardTemplate === "thumbnail" ? (
-        thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal })
+        thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal, isDragging })
       ) : (
-        defaultCard({ bookmark, onRate, onDelete, onEditBookmark })
+        defaultCard({ bookmark, onRate, onDelete, onEditBookmark, isDragging })
       )}
     </li>
   )
 }
 
-function defaultCard({ bookmark, onRate, onDelete, onEditBookmark }) {
+function defaultCard({ bookmark, onRate, onDelete, onEditBookmark, isDragging }) {
   const { id, url, title, description, category, rating, createdAt } = bookmark
 
   const domain = (() => {
@@ -77,6 +77,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEditBookmark }) {
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline truncate block mt-0.5 leading-none"
+            style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
           >
             {domain}
           </a>
@@ -121,6 +122,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEditBookmark }) {
         <RatingStar
           rating={rating}
           onChange={(r) => {
+            if (isDragging) return;
             if (r === rating) r = 0
             onRate(id, {rating: r})
           }}
@@ -132,7 +134,7 @@ function defaultCard({ bookmark, onRate, onDelete, onEditBookmark }) {
 }
 
 
-function thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal }) {
+function thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImageModal, isDragging }) {
   const { id, url, title, description, category, rating, memo, createdAt, thumbnail } = bookmark
 
   const domain = (() => {
@@ -177,6 +179,7 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImage
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-indigo-500 hover:text-indigo-700 hover:underline truncate block mt-0.5 leading-none"
+            style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
           >
             {domain}
           </a>
@@ -214,6 +217,7 @@ function thumbnailCard({ bookmark, onRate, onDelete, onEditBookmark, onOpenImage
         <RatingStar
           rating={rating}
           onChange={(r) => {
+            if (isDragging) return;
             if (r === rating) r = 0
             onRate(id, {rating: r})
           }}
